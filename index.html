@@ -6,7 +6,6 @@
     <title>Board Creator</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
-        /* Zachowaj wszystkie oryginalne style */
         body {
             text-align: center;
             font-family: Arial, sans-serif;
@@ -194,7 +193,7 @@
         </div>
     </div>
     
-    <div class="grid-container">
+    <div class="grid-container" id="grid-container">
         <div class="grid-background"></div>
         <div class="grid" id="grid"></div>
     </div>
@@ -217,6 +216,7 @@
     
     <script>
         const grid = document.getElementById("grid");
+        const gridContainer = document.getElementById("grid-container");
         const unitsContainer = document.getElementById("units-container");
         const shapesContainer = document.getElementById("shapes-container");
         const removeModeBtn = document.getElementById("removeModeBtn");
@@ -234,12 +234,11 @@
         // Add omen to units
         availableUnits.push('omen.png');
 
-        // Improved image preloading with CORS handling
+        // Improved image preloading
         function preloadImages() {
             const images = ['omen.png', 'relic.png', 'default.png', ...availableUnits];
             images.forEach(src => {
                 const img = new Image();
-                img.crossOrigin = "Anonymous";
                 img.src = src;
             });
         }
@@ -307,7 +306,6 @@
                     omenContainer.classList.add("omen-unit");
                     
                     const omenImg = new Image();
-                    omenImg.crossOrigin = "Anonymous";
                     omenImg.src = 'omen.png';
                     omenImg.classList.add("omen-image");
                     
@@ -320,7 +318,6 @@
                     cell.appendChild(omenContainer);
                 } else {
                     const img = document.createElement("img");
-                    img.crossOrigin = "Anonymous";
                     img.src = selectedUnit;
                     img.classList.add("unit");
                     img.style.imageRendering = "crisp-edges";
@@ -367,7 +364,6 @@
                 omenContainer.classList.add("omen-unit");
                 
                 const omenImg = new Image();
-                omenImg.crossOrigin = "Anonymous";
                 omenImg.src = 'omen.png';
                 omenImg.classList.add("omen-image");
                 
@@ -385,7 +381,6 @@
             for (let i = omenCount; i < shuffledCells.length && unitsPlaced < maxUnits; i++) {
                 const cell = shuffledCells[i];
                 const img = document.createElement("img");
-                img.crossOrigin = "Anonymous";
                 img.src = availableUnits[unitsPlaced % (availableUnits.length - 1)];
                 img.classList.add("unit");
                 img.style.imageRendering = "crisp-edges";
@@ -447,23 +442,35 @@
         }
 
         function saveAsImage() {
+            // Ustawienia dla html2canvas
             const options = {
-                useCORS: true,
                 scale: 2,
                 logging: true,
+                useCORS: true,
+                allowTaint: true,
                 backgroundColor: null,
-                allowTaint: false
+                onclone: (clonedDoc) => {
+                    // Upewnij się, że tło jest widoczne w klonie
+                    const clonedContainer = clonedDoc.getElementById('grid-container');
+                    if (clonedContainer) {
+                        clonedContainer.style.visibility = 'visible';
+                        clonedContainer.style.opacity = '1';
+                    }
+                }
             };
 
-            html2canvas(grid, options).then(canvas => {
-                const generatedImage = document.getElementById("generated-image");
-                generatedImage.src = canvas.toDataURL("image/png");
-                document.getElementById("image-container").style.display = "block";
-                generatedImage.scrollIntoView({ behavior: 'smooth' });
-            }).catch(error => {
-                console.error("Error generating image:", error);
-                alert("Error generating image. Check console for details.");
-            });
+            // Generuj obraz z całego kontenera, a nie tylko siatki
+            html2canvas(document.getElementById("grid-container"), options)
+                .then(canvas => {
+                    const generatedImage = document.getElementById("generated-image");
+                    generatedImage.src = canvas.toDataURL("image/png");
+                    document.getElementById("image-container").style.display = "block";
+                    generatedImage.scrollIntoView({ behavior: 'smooth' });
+                })
+                .catch(error => {
+                    console.error("Error generating image:", error);
+                    alert("Error generating image. Check console for details.");
+                });
         }
 
         // Initialize the app
