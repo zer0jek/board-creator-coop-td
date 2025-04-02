@@ -282,7 +282,7 @@
     <script>
         const config = {
             maxUnits: 28,
-            omenCount: { min: 0, max: 28 }
+            omenCount: { min: 0, max: 18 }  // Zmieniamy zakres na 0-18
         };
 
         const grid = document.getElementById("grid");
@@ -335,8 +335,8 @@
             const greenCells = Array.from(document.querySelectorAll('.cell.green'));
             const shuffledCells = [...greenCells].sort(() => Math.random() - 0.5);
             
+            // Losujemy liczbę Omenów od 0 do 18
             const omenCount = Math.floor(Math.random() * (config.omenCount.max - config.omenCount.min + 1)) + config.omenCount.min;
-            const relicCount = omenCount;
             
             // Umieść Omens
             for (let i = 0; i < Math.min(omenCount, shuffledCells.length); i++) {
@@ -344,7 +344,7 @@
                 placeOmen(cell);
             }
             
-            // Umieść jednostki
+            // Umieść jednostki (maksymalnie 28 - omenCount)
             let unitsPlaced = 0;
             const maxUnitsToPlace = Math.min(config.maxUnits - omenCount, shuffledCells.length - omenCount);
             
@@ -356,9 +356,9 @@
                 unitsPlaced++;
             }
             
-            // Umieść relikwie
+            // Umieść relikwie (tyle samo co Omenów)
             const allGreenCells = [...greenCells].sort(() => Math.random() - 0.5);
-            for (let i = 0; i < Math.min(relicCount, allGreenCells.length); i++) {
+            for (let i = 0; i < Math.min(omenCount, allGreenCells.length); i++) {
                 const cell = allGreenCells[i];
                 placeRelic(cell);
             }
