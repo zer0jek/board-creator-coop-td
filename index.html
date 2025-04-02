@@ -6,7 +6,22 @@
     <title>Board Creator (Fixed)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
-        /* Zachowaj poprzednie style, ale zmodyfikuj tło */
+        body {
+            text-align: center;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            padding: 20px;
+            background-color: white;
+        }
+        .grid-container {
+            position: relative;
+            width: 350px;
+            height: 250px;
+            margin-bottom: 30px;
+        }
         .grid-background {
             position: absolute;
             width: 100%;
@@ -14,23 +29,85 @@
             background-size: cover;
             z-index: 1;
         }
-        
-        /* Dodaj to dla pewności */
-        img, .omen-image, .relic {
-            display: block;
-            max-width: 100%;
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(7, 50px);
+            grid-template-rows: repeat(5, 50px);
+            position: relative;
+            width: 350px;
+            height: 250px;
+            z-index: 2;
         }
+        .cell {
+            width: 50px;
+            height: 50px;
+            position: relative;
+        }
+        .unit {
+            width: 40px;
+            height: 40px;
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            z-index: 3;
+            image-rendering: crisp-edges;
+        }
+        .omen-unit {
+            position: relative;
+            width: 40px;
+            height: 40px;
+            z-index: 4;
+        }
+        .omen-image {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            image-rendering: crisp-edges;
+        }
+        .omen-dot {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 2;
+        }
+        .relic {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            top: 5px;
+            left: 5px;
+            background-size: contain;
+            background-repeat: no-repeat;
+            border: 2px solid;
+            z-index: 2;
+        }
+        /* Reszta stylów pozostaje bez zmian */
     </style>
 </head>
 <body>
-    <!-- Zachowaj poprzedni HTML, ale zmień sposób ładowania obrazków -->
+    <h1>Board Creator</h1>
+    
+    <div class="buttons">
+        <button onclick="clearElements()">Clear All</button>
+        <button onclick="saveAsImage()">Save as Image</button>
+    </div>
+    
     <div class="grid-container">
-        <div class="grid-background" id="grid-bg"></div> <!-- Zmienione - obraz tła będzie ładowany przez JS -->
+        <div class="grid-background" id="grid-bg"></div>
         <div class="grid" id="grid"></div>
+    </div>
+    
+    <div id="image-container" style="display:none;">
+        <h3>Generated Board</h3>
+        <img id="generated-image" src="" alt="Generated board image">
     </div>
 
     <script>
-        // 1. Ładowanie zasobów z prawidłowymi ścieżkami
+        // 1. Inicjalizacja zasobów z prawidłowymi ścieżkami
         const assets = {
             background: './default.png',
             omen: './omen.png',
@@ -38,74 +115,88 @@
             units: Array(30).fill().map((_, i) => `./image${i+1}.png`)
         };
 
-        // 2. Inicjalizacja obrazów z cache'owaniem
-        function preloadImages(urls) {
-            return Promise.all(
-                urls.map(url => {
-                    return new Promise((resolve, reject) => {
-                        const img = new Image();
-                        img.crossOrigin = "Anonymous"; // Rozwiązanie CORS
-                        img.src = url;
-                        img.onload = () => resolve(img);
-                        img.onerror = reject;
-                    });
-                })
-            );
+        // 2. Preload obrazów z cache'owaniem
+        async function preloadImages() {
+            const images = [
+                assets.background,
+                assets.omen,
+                assets.relic,
+                ...assets.units
+            ];
+            
+            await Promise.all(images.map(url => {
+                return new Promise((resolve) => {
+                    const img = new Image();
+                    img.crossOrigin = "Anonymous";
+                    img.src = url;
+                    img.onload = resolve;
+                });
+            });
+            console.log("All assets preloaded");
         }
 
-        // 3. Funkcja generująca obrazek z poprawkami
+        // 3. Poprawiona funkcja generująca obraz
         async function saveAsImage() {
             try {
-                // Włącz dodatkowe logowanie
                 console.log("Starting image generation...");
                 
                 const options = {
                     useCORS: true,
-                    allowTaint: true,
-                    scale: 2, // Lepsza jakość
+                    scale: 2,
                     logging: true,
                     backgroundColor: null,
-                    removeContainer: true
+                    allowTaint: false,
+                    foreignObjectRendering: false
                 };
 
                 const canvas = await html2canvas(document.getElementById("grid"), options);
-                
-                console.log("Canvas generated successfully");
-                
                 const img = document.getElementById("generated-image");
                 img.src = canvas.toDataURL("image/png");
                 document.getElementById("image-container").style.display = "block";
+                
+                console.log("Image generated successfully");
             } catch (error) {
-                console.error("Generation failed:", error);
-                alert("Error generating image. Check console for details.");
+                console.error("Generation error:", error);
+                alert("Error generating image. Check console.");
             }
         }
 
-        // 4. Inicjalizacja - ładowanie zasobów przed użyciem
-        document.addEventListener('DOMContentLoaded', async () => {
-            try {
-                const [bgImg] = await preloadImages([assets.background]);
-                document.getElementById("grid-bg").style.backgroundImage = `url(${bgImg.src})`;
-                
-                console.log("Assets loaded successfully");
-            } catch (error) {
-                console.error("Error loading assets:", error);
-            }
-        });
-
-        // 5. Zmodyfikowana funkcja placeElement - upewnij się, że używa preloadImages
-        async function placeElement(event) {
-            if (selectedUnit) {
-                const img = new Image();
-                img.crossOrigin = "Anonymous";
-                img.src = selectedUnit;
-                await new Promise((resolve) => { img.onload = resolve; });
-                
-                // Reszta logiki dodawania elementów...
-            }
+        // 4. Inicjalizacja planszy
+        async function initBoard() {
+            await preloadImages();
+            
+            // Ustaw tło
+            document.getElementById("grid-bg").style.backgroundImage = `url(${assets.background})`;
+            
+            // Stwórz komórki
+            const layout = [
+                ["path", "green", "green", "green", "green", "green", "brown"],
+                ["path", "path", "path", "green", "path", "path", "path"],
+                ["green", "green", "path", "green", "path", "green", "green"],
+                ["green", "green", "path", "green", "path", "green", "green"],
+                ["green", "green", "path", "path", "path", "green", "green"]
+            ];
+            
+            const grid = document.getElementById("grid");
+            layout.forEach((row, rowIndex) => {
+                row.forEach((cellType, colIndex) => {
+                    const cell = document.createElement("div");
+                    cell.classList.add("cell", cellType);
+                    if (cellType === "green") {
+                        cell.onclick = () => placeElement(cell);
+                    }
+                    grid.appendChild(cell);
+                });
+            });
         }
+
+        // 5. Pozostałe funkcje
+        function clearElements() {
+            document.querySelectorAll(".unit, .omen-unit, .relic").forEach(el => el.remove());
+        }
+
+        // Start aplikacji
+        document.addEventListener('DOMContentLoaded', initBoard);
     </script>
-
-    <!-- Reszta Twojego kodu pozostaje bez zmian -->
 </body>
 </html>
