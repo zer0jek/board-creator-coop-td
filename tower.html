@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Board Creator</title>
+    <title>Board Creator 7x7</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         .top-bar {
@@ -85,8 +85,10 @@
             width: 50px;
             height: 50px;
             position: relative;
-            
             box-sizing: border-box;
+        }
+        .cell.g {
+            cursor: pointer;
         }
         .unit {
             width: 40px;
@@ -325,7 +327,7 @@
         });
 
         function preloadImages() {
-            const images = ['omen.png', 'relic.png', 'default.png', ...availableUnits.map(u => u.src)];
+            const images = ['omen.png', 'relic.png', 'default2.png', ...availableUnits.map(u => u.src)];
             images.forEach(src => {
                 const img = new Image();
                 img.src = src;
@@ -512,7 +514,7 @@
                 });
         }
 
-        // Plansza 7x7 z uproszczonymi oznaczeniami (g, b, p)
+        // Plansza 7x7 z uproszczonymi oznaczeniami (g, p, b)
         const layout = [
             ["b", "g", "p", "p", "p", "g", "b"],
             ["g", "g", "p", "g", "p", "g", "g"],
