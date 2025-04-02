@@ -6,46 +6,45 @@
     <title>Board Creator</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
-        /* Fixed Top Bar */
         .top-bar {
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
-            background-color: #2c3e50;
+            background-color: #4CAF50;
             color: white;
-            padding: 10px 20px;
+            padding: 8px 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             z-index: 1000;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
         }
         .top-bar-buttons {
             display: flex;
-            gap: 15px;
+            gap: 10px;
         }
         .top-bar a {
             text-decoration: none;
         }
         .top-bar button {
-            background-color: #3498db;
+            background-color: rgba(255,255,255,0.2);
             color: white;
             border: none;
-            padding: 8px 16px;
+            padding: 6px 12px;
             border-radius: 4px;
             cursor: pointer;
             transition: all 0.3s;
-            font-weight: bold;
+            font-size: 14px;
         }
         .top-bar button:hover {
-            background-color: #2980b9;
-            transform: translateY(-2px);
+            background-color: rgba(255,255,255,0.3);
         }
         .top-bar h1 {
             margin: 0;
-            font-size: 1.5rem;
-            color: #ecf0f1;
+            font-size: 1.3rem;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
         }
 
         body {
@@ -54,8 +53,8 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 20px;
-            padding: 80px 20px 20px;
+            gap: 15px;
+            padding: 70px 15px 15px;
             background-color: white;
         }
 
@@ -178,23 +177,30 @@
             box-shadow: 0 0 8px rgba(76, 175, 80, 0.6) !important;
         }
         .buttons {
-            margin: 10px;
+            margin: 5px;
             display: flex;
-            gap: 15px;
+            gap: 10px;
             flex-wrap: wrap;
             justify-content: center;
         }
         .buttons button {
-            padding: 8px 16px;
+            padding: 8px 12px;
             cursor: pointer;
             background-color: #4CAF50;
             color: white;
             border: none;
             border-radius: 4px;
             transition: background-color 0.3s;
+            font-size: 14px;
         }
         .buttons button:hover {
             background-color: #45a049;
+        }
+        #removeModeBtn {
+            background-color: #e74c3c;
+        }
+        #removeModeBtn:hover {
+            background-color: #c0392b;
         }
         .color-controls {
             display: flex;
@@ -224,7 +230,6 @@
     </style>
 </head>
 <body>
-    <!-- Fixed Top Bar -->
     <div class="top-bar">
         <div class="top-bar-buttons">
             <a href="tower.html"><button>Tower</button></a>
@@ -239,7 +244,7 @@
         <button onclick="deselectAll()">Deselect All</button>
         <button id="removeModeBtn" onclick="toggleRemoveMode()">Remove Mode: OFF</button>
         <button onclick="saveAsImage()">Save as Image</button>
-        <button onclick="randomizePlacement()">Random Placement</button>
+        <button onclick="randomizePlacement()">DO NOT CLIK!!!!</button>
     </div>
     
     <div class="color-controls">
@@ -253,7 +258,6 @@
         </div>
     </div>
     
-    <!-- Plansza -->
     <div class="grid-container" id="grid-container">
         <div class="grid-background"></div>
         <div class="grid" id="grid"></div>
@@ -262,7 +266,7 @@
     <h2>Available Units</h2>
     <div class="units-container" id="units-container"></div>
     
-    <h2>Shapes</h2>
+    <h2>Omen "relic"</h2>
     <div class="shapes-container" id="shapes-container">
         <div class="shape-option" onclick="selectShape('relic')">
             <img src="relic.png" alt="Relic">
@@ -276,6 +280,11 @@
     </div>
     
     <script>
+        const config = {
+            maxUnits: 28,
+            omenCount: { min: 1, max: 5 }
+        };
+
         const grid = document.getElementById("grid");
         const unitsContainer = document.getElementById("units-container");
         const shapesContainer = document.getElementById("shapes-container");
@@ -289,18 +298,29 @@
         let currentDotColor = "#000000";
         let currentRelicColor = "#000000";
 
-        // Available units (30 total)
-        const availableUnits = Array(30).fill().map((_, i) => ({
+        // Statyczne nazwy jednostek
+        const unitNames = {
+            1: "Oni", 2: "Biker", 3: "Slime", 4: "Ice Knight", 5: "Asura",
+            6: "Coin", 7: "Cat", 8: "Witch", 9: "Mouse", 10: "Heli",
+            11: "Mimic", 12: "Duck", 13: "Clara", 14: "Assassin", 15: "Warlock",
+            16: "Knight", 17: "Summoner", 18: "Alchemist", 19: "Templar", 20: "Ninja",
+            21: "Shaman", 22: "Valkyrie", 23: "Witch", 24: "Samurai", 25: "Dragon",
+            26: "Golem", 27: "Phoenix", 28: "Titan", 
+            'omen': "Omen"
+        };
+
+        const availableUnits = Array(config.maxUnits).fill().map((_, i) => ({
+            id: i + 1,
             src: `image${i + 1}.png`,
-            name: `Unit ${i + 1}`
+            name: unitNames[i + 1] || `Unit ${i + 1}`
         }));
-        // Add omen to units
+        
         availableUnits.push({
+            id: 'omen',
             src: 'omen.png',
             name: 'Omen'
         });
 
-        // Preload images
         function preloadImages() {
             const images = ['omen.png', 'relic.png', 'default.png', ...availableUnits.map(u => u.src)];
             images.forEach(src => {
@@ -309,15 +329,74 @@
             });
         }
 
-        dotColorPicker.addEventListener("input", function() {
-            currentDotColor = this.value;
-            updateAllOmenDots();
-        });
+        function randomizePlacement() {
+            clearElements();
+            
+            const greenCells = Array.from(document.querySelectorAll('.cell.green'));
+            const shuffledCells = [...greenCells].sort(() => Math.random() - 0.5);
+            
+            const omenCount = Math.floor(Math.random() * (config.omenCount.max - config.omenCount.min + 1)) + config.omenCount.min;
+            const relicCount = omenCount;
+            
+            for (let i = 0; i < Math.min(omenCount, shuffledCells.length); i++) {
+                const cell = shuffledCells[i];
+                placeOmen(cell);
+            }
+            
+            let unitsPlaced = 0;
+            const maxUnitsToPlace = config.maxUnits - omenCount;
+            for (let i = omenCount; i < shuffledCells.length && unitsPlaced < maxUnitsToPlace; i++) {
+                const cell = shuffledCells[i];
+                const unit = availableUnits[unitsPlaced % (availableUnits.length - 1)];
+                placeUnit(cell, unit);
+                unitsPlaced++;
+            }
+            
+            const allGreenCells = [...greenCells].sort(() => Math.random() - 0.5);
+            for (let i = 0; i < Math.min(relicCount, allGreenCells.length); i++) {
+                const cell = allGreenCells[i];
+                placeRelic(cell);
+            }
+        }
 
-        relicColorPicker.addEventListener("input", function() {
-            currentRelicColor = this.value;
-            updateAllRelicBorders();
-        });
+        function placeOmen(cell) {
+            const existingOmen = cell.querySelector('.omen-unit');
+            if (existingOmen) existingOmen.remove();
+            
+            const omenContainer = document.createElement("div");
+            omenContainer.classList.add("omen-unit");
+            
+            const omenImg = new Image();
+            omenImg.src = 'omen.png';
+            omenImg.classList.add("omen-image");
+            
+            const dot = document.createElement("div");
+            dot.classList.add("omen-dot", "locked-color");
+            dot.style.backgroundColor = currentDotColor;
+            
+            omenContainer.appendChild(omenImg);
+            omenContainer.appendChild(dot);
+            cell.appendChild(omenContainer);
+        }
+
+        function placeUnit(cell, unit) {
+            const img = document.createElement("img");
+            img.src = unit.src;
+            img.classList.add("unit");
+            img.style.imageRendering = "crisp-edges";
+            cell.appendChild(img);
+        }
+
+        function placeRelic(cell) {
+            const existingRelic = cell.querySelector('.relic');
+            if (existingRelic) existingRelic.remove();
+            
+            const relicDiv = document.createElement("div");
+            relicDiv.classList.add("relic", "locked-color");
+            relicDiv.style.borderColor = currentRelicColor;
+            relicDiv.style.backgroundImage = "url('relic.png')";
+            cell.appendChild(relicDiv);
+        }
 
         function updateAllOmenDots() {
             document.querySelectorAll('.omen-dot:not(.locked-color)').forEach(dot => {
@@ -334,7 +413,7 @@
         function toggleRemoveMode() {
             removeMode = !removeMode;
             removeModeBtn.textContent = removeMode ? "Remove Mode: ON" : "Remove Mode: OFF";
-            removeModeBtn.style.backgroundColor = removeMode ? "#f44336" : "#4CAF50";
+            removeModeBtn.style.backgroundColor = removeMode ? "#c0392b" : "#e74c3c";
         }
 
         function selectUnit(src, event) {
@@ -365,40 +444,14 @@
             
             if (selectedUnit) {
                 if (selectedUnit.endsWith('omen.png')) {
-                    const existingOmen = cell.querySelector('.omen-unit');
-                    if (existingOmen) existingOmen.remove();
-                    
-                    const omenContainer = document.createElement("div");
-                    omenContainer.classList.add("omen-unit");
-                    
-                    const omenImg = new Image();
-                    omenImg.src = 'omen.png';
-                    omenImg.classList.add("omen-image");
-                    
-                    const dot = document.createElement("div");
-                    dot.classList.add("omen-dot", "locked-color");
-                    dot.style.backgroundColor = currentDotColor;
-                    
-                    omenContainer.appendChild(omenImg);
-                    omenContainer.appendChild(dot);
-                    cell.appendChild(omenContainer);
+                    placeOmen(cell);
                 } else {
-                    const img = document.createElement("img");
-                    img.src = selectedUnit;
-                    img.classList.add("unit");
-                    img.style.imageRendering = "crisp-edges";
-                    cell.appendChild(img);
+                    const unit = availableUnits.find(u => u.src === selectedUnit);
+                    if (unit) placeUnit(cell, unit);
                 }
             } 
             else if (selectedShape === 'relic') {
-                const existingRelic = cell.querySelector('.relic');
-                if (existingRelic) existingRelic.remove();
-                
-                const relicDiv = document.createElement("div");
-                relicDiv.classList.add("relic", "locked-color");
-                relicDiv.style.borderColor = currentRelicColor;
-                relicDiv.style.backgroundImage = "url('relic.png')";
-                cell.appendChild(relicDiv);
+                placeRelic(cell);
             }
         }
 
@@ -413,80 +466,6 @@
         function clearElements() {
             document.querySelectorAll(".unit, .omen-unit, .relic").forEach(element => element.remove());
         }
-
-        function randomizePlacement() {
-            clearElements();
-            
-            const greenCells = Array.from(document.querySelectorAll('.cell.green'));
-            const shuffledCells = [...greenCells].sort(() => Math.random() - 0.5);
-            
-            const omenCount = Math.floor(Math.random() * 5) + 1;
-            const relicCount = omenCount;
-            
-            for (let i = 0; i < Math.min(omenCount, shuffledCells.length); i++) {
-                const cell = shuffledCells[i];
-                
-                const omenContainer = document.createElement("div");
-                omenContainer.classList.add("omen-unit");
-                
-                const omenImg = new Image();
-                omenImg.src = 'omen.png';
-                omenImg.classList.add("omen-image");
-                
-                const dot = document.createElement("div");
-                dot.classList.add("omen-dot", "locked-color");
-                dot.style.backgroundColor = currentDotColor;
-                
-                omenContainer.appendChild(omenImg);
-                omenContainer.appendChild(dot);
-                cell.appendChild(omenContainer);
-            }
-            
-            let unitsPlaced = 0;
-            const maxUnits = 30 - omenCount;
-            for (let i = omenCount; i < shuffledCells.length && unitsPlaced < maxUnits; i++) {
-                const cell = shuffledCells[i];
-                const img = document.createElement("img");
-                img.src = availableUnits[unitsPlaced % (availableUnits.length - 1)].src;
-                img.classList.add("unit");
-                img.style.imageRendering = "crisp-edges";
-                cell.appendChild(img);
-                unitsPlaced++;
-            }
-            
-            const allGreenCells = [...greenCells].sort(() => Math.random() - 0.5);
-            for (let i = 0; i < Math.min(relicCount, allGreenCells.length); i++) {
-                const cell = allGreenCells[i];
-                
-                const relicDiv = document.createElement("div");
-                relicDiv.classList.add("relic", "locked-color");
-                relicDiv.style.borderColor = currentRelicColor;
-                relicDiv.style.backgroundImage = "url('relic.png')";
-                cell.appendChild(relicDiv);
-            }
-        }
-
-        const layout = [
-            ["path", "green", "green", "green", "green", "green", "brown"],
-            ["path", "path", "path", "green", "path", "path", "path"],
-            ["green", "green", "path", "green", "path", "green", "green"],
-            ["green", "green", "path", "green", "path", "green", "green"],
-            ["green", "green", "path", "path", "path", "green", "green"]
-        ];
-        
-        // Create grid
-        layout.forEach((row, rowIndex) => {
-            row.forEach((cellType, colIndex) => {
-                const cell = document.createElement("div");
-                cell.classList.add("cell", cellType);
-                cell.dataset.row = rowIndex;
-                cell.dataset.col = colIndex;
-                if (cellType === "green") {
-                    cell.addEventListener("click", placeElement);
-                }
-                grid.appendChild(cell);
-            });
-        });
 
         function generateUnitSelection() {
             unitsContainer.innerHTML = '';
@@ -533,7 +512,27 @@
                 });
         }
 
-        // Initialize the app
+        const layout = [
+            ["path", "green", "green", "green", "green", "green", "brown"],
+            ["path", "path", "path", "green", "path", "path", "path"],
+            ["green", "green", "path", "green", "path", "green", "green"],
+            ["green", "green", "path", "green", "path", "green", "green"],
+            ["green", "green", "path", "path", "path", "green", "green"]
+        ];
+        
+        layout.forEach((row, rowIndex) => {
+            row.forEach((cellType, colIndex) => {
+                const cell = document.createElement("div");
+                cell.classList.add("cell", cellType);
+                cell.dataset.row = rowIndex;
+                cell.dataset.col = colIndex;
+                if (cellType === "green") {
+                    cell.addEventListener("click", placeElement);
+                }
+                grid.appendChild(cell);
+            });
+        });
+
         preloadImages();
         generateUnitSelection();
     </script>
