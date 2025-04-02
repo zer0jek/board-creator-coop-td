@@ -338,20 +338,25 @@
             const omenCount = Math.floor(Math.random() * (config.omenCount.max - config.omenCount.min + 1)) + config.omenCount.min;
             const relicCount = omenCount;
             
+            // Umieść Omens
             for (let i = 0; i < Math.min(omenCount, shuffledCells.length); i++) {
                 const cell = shuffledCells[i];
                 placeOmen(cell);
             }
             
+            // Umieść jednostki
             let unitsPlaced = 0;
-            const maxUnitsToPlace = config.maxUnits - omenCount;
+            const maxUnitsToPlace = Math.min(config.maxUnits - omenCount, shuffledCells.length - omenCount);
+            
             for (let i = omenCount; i < shuffledCells.length && unitsPlaced < maxUnitsToPlace; i++) {
                 const cell = shuffledCells[i];
-                const unit = availableUnits[unitsPlaced % (availableUnits.length - 1)];
+                const unitIndex = Math.floor(Math.random() * (availableUnits.length - 1)); // -1 aby pominąć Omen
+                const unit = availableUnits[unitIndex];
                 placeUnit(cell, unit);
                 unitsPlaced++;
             }
             
+            // Umieść relikwie
             const allGreenCells = [...greenCells].sort(() => Math.random() - 0.5);
             for (let i = 0; i < Math.min(relicCount, allGreenCells.length); i++) {
                 const cell = allGreenCells[i];
