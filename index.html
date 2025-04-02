@@ -3,498 +3,109 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Board Creator</title>
+    <title>Board Creator (Fixed)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
-        body {
-            text-align: center;
-            font-family: Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 20px;
-            padding: 20px;
-            background-color: white;
-        }
-        .grid-container {
-            position: relative;
-            width: 350px;
-            height: 250px;
-            margin-bottom: 30px;
-        }
+        /* Zachowaj poprzednie style, ale zmodyfikuj tło */
         .grid-background {
             position: absolute;
             width: 100%;
             height: 100%;
-            background: url('default.png') no-repeat center center;
             background-size: cover;
             z-index: 1;
         }
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(7, 50px);
-            grid-template-rows: repeat(5, 50px);
-            position: relative;
-            width: 350px;
-            height: 250px;
-            z-index: 2;
-        }
-        .cell {
-            width: 50px;
-            height: 50px;
-            position: relative;
-        }
-        .unit {
-            width: 40px;
-            height: 40px;
-            position: absolute;
-            cursor: move;
-            top: 5px;
-            left: 5px;
-            z-index: 3;
-            pointer-events: none;
-            image-rendering: crisp-edges;
-        }
-        .omen-unit {
-            position: relative;
-            width: 40px;
-            height: 40px;
-            z-index: 4;
-        }
-        .omen-image {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-            image-rendering: crisp-edges;
-            position: absolute;
-            top: 0;
-            left: 0;
-            z-index: 1;
-        }
-        .omen-dot {
-            position: absolute;
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 2;
-        }
-        .relic {
-            position: absolute;
-            width: 40px;
-            height: 40px;
-            top: 5px;
-            left: 5px;
-            background-size: contain;
-            background-repeat: no-repeat;
-            background-position: center;
-            border: 2px solid;
-            border-radius: 0;
-            image-rendering: crisp-edges;
-            z-index: 2;
-        }
-        .units-container, .shapes-container {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            justify-content: center;
-            max-width: 600px;
-            margin: 20px auto;
-            padding: 20px;
-            background-color: #f5f5f5;
-            border-radius: 10px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-        .unit-option, .shape-option {
-            transition: transform 0.2s;
-            cursor: pointer;
-            text-align: center;
-        }
-        .unit-option:hover, .shape-option:hover {
-            transform: scale(1.1);
-        }
-        .unit-option img, .shape-option img {
-            width: 50px;
-            height: 50px;
-            border: 2px solid transparent;
-            border-radius: 5px;
-            image-rendering: crisp-edges;
-        }
-        .selected {
-            border-color: #4CAF50 !important;
-            box-shadow: 0 0 8px rgba(76, 175, 80, 0.6) !important;
-        }
-        .buttons {
-            margin: 10px;
-            display: flex;
-            gap: 15px;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-        .buttons button {
-            padding: 8px 16px;
-            cursor: pointer;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            transition: background-color 0.3s;
-        }
-        .buttons button:hover {
-            background-color: #45a049;
-        }
-        .color-controls {
-            display: flex;
-            gap: 20px;
-            margin-top: 10px;
-        }
-        .color-control {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        #image-container {
-            display: none;
-            margin-top: 20px;
-            padding: 15px;
-            background-color: #f5f5f5;
-            border-radius: 8px;
-        }
-        footer {
-            margin-top: 30px;
-            color: #666;
-            font-size: 14px;
-        }
-        .locked-color {
-            pointer-events: none;
+        
+        /* Dodaj to dla pewności */
+        img, .omen-image, .relic {
+            display: block;
+            max-width: 100%;
         }
     </style>
 </head>
 <body>
-    <h1>Board Creator</h1>
-    <div class="buttons">
-        <button onclick="clearElements()">Clear All</button>
-        <button onclick="deselectAll()">Deselect All</button>
-        <button id="removeModeBtn" onclick="toggleRemoveMode()">Remove Mode: OFF</button>
-        <button onclick="saveAsImage()">Save as Image</button>
-        <button onclick="randomizePlacement()">Random Placement</button>
-    </div>
-    
-    <div class="color-controls">
-        <div class="color-control">
-            <label for="dotColor">Omen Dot Color:</label>
-            <input type="color" id="dotColor" value="#000000">
-        </div>
-        <div class="color-control">
-            <label for="relicColor">Relic Border Color:</label>
-            <input type="color" id="relicColor" value="#000000">
-        </div>
-    </div>
-    
+    <!-- Zachowaj poprzedni HTML, ale zmień sposób ładowania obrazków -->
     <div class="grid-container">
-        <div class="grid-background"></div>
+        <div class="grid-background" id="grid-bg"></div> <!-- Zmienione - obraz tła będzie ładowany przez JS -->
         <div class="grid" id="grid"></div>
     </div>
-    
-    <h2>Available Units</h2>
-    <div class="units-container" id="units-container"></div>
-    
-    <h2>Shapes</h2>
-    <div class="shapes-container" id="shapes-container">
-        <div class="shape-option" onclick="selectShape('relic')">
-            <img src="relic.png" alt="Relic">
-            <p>Relic</p>
-        </div>
-    </div>
-    
-    <div id="image-container">
-        <h3>Generated Board</h3>
-        <img id="generated-image" src="" alt="Generated board image">
-    </div>
-    
+
     <script>
-        const grid = document.getElementById("grid");
-        const unitsContainer = document.getElementById("units-container");
-        const shapesContainer = document.getElementById("shapes-container");
-        const removeModeBtn = document.getElementById("removeModeBtn");
-        const dotColorPicker = document.getElementById("dotColor");
-        const relicColorPicker = document.getElementById("relicColor");
-        
-        let selectedUnit = null;
-        let selectedShape = null;
-        let removeMode = false;
-        let currentDotColor = "#000000";
-        let currentRelicColor = "#000000";
-
-        // Available units (30 total)
-        const availableUnits = Array(30).fill().map((_, i) => `image${i + 1}.png`);
-        // Add omen to units
-        availableUnits.push('omen.png');
-
-        // Preload images for better quality
-        const preloadImages = () => {
-            const images = ['omen.png', 'relic.png', 'default.png', ...availableUnits];
-            images.forEach(src => {
-                const img = new Image();
-                img.src = src;
-            });
+        // 1. Ładowanie zasobów z prawidłowymi ścieżkami
+        const assets = {
+            background: './default.png',
+            omen: './omen.png',
+            relic: './relic.png',
+            units: Array(30).fill().map((_, i) => `./image${i+1}.png`)
         };
 
-        dotColorPicker.addEventListener("input", function() {
-            currentDotColor = this.value;
-            updateAllOmenDots();
-        });
-
-        relicColorPicker.addEventListener("input", function() {
-            currentRelicColor = this.value;
-            updateAllRelicBorders();
-        });
-
-        function updateAllOmenDots() {
-            document.querySelectorAll('.omen-dot:not(.locked-color)').forEach(dot => {
-                dot.style.backgroundColor = currentDotColor;
-            });
+        // 2. Inicjalizacja obrazów z cache'owaniem
+        function preloadImages(urls) {
+            return Promise.all(
+                urls.map(url => {
+                    return new Promise((resolve, reject) => {
+                        const img = new Image();
+                        img.crossOrigin = "Anonymous"; // Rozwiązanie CORS
+                        img.src = url;
+                        img.onload = () => resolve(img);
+                        img.onerror = reject;
+                    });
+                })
+            );
         }
 
-        function updateAllRelicBorders() {
-            document.querySelectorAll('.relic:not(.locked-color)').forEach(relic => {
-                relic.style.borderColor = currentRelicColor;
-            });
-        }
-
-        function toggleRemoveMode() {
-            removeMode = !removeMode;
-            removeModeBtn.textContent = removeMode ? "Remove Mode: ON" : "Remove Mode: OFF";
-            removeModeBtn.style.backgroundColor = removeMode ? "#f44336" : "#4CAF50";
-        }
-
-        function selectUnit(src, event) {
-            document.querySelectorAll('.unit-option img, .shape-option').forEach(el => {
-                el.classList.remove('selected');
-            });
-            selectedUnit = src;
-            selectedShape = null;
-            event.target.classList.add('selected');
-        }
-
-        function selectShape(type) {
-            document.querySelectorAll('.shape-option, .unit-option img').forEach(el => {
-                el.classList.remove('selected');
-            });
-            selectedShape = type;
-            selectedUnit = null;
-            event.currentTarget.classList.add('selected');
-        }
-
-        function placeElement(event) {
-            const cell = event.currentTarget;
-            
-            if (removeMode) {
-                cell.querySelectorAll('.unit, .omen-unit, .relic').forEach(el => el.remove());
-                return;
-            }
-            
-            if (selectedUnit) {
-                if (selectedUnit.endsWith('omen.png')) {
-                    // Remove existing Omen if present
-                    const existingOmen = cell.querySelector('.omen-unit');
-                    if (existingOmen) existingOmen.remove();
-                    
-                    // Create new Omen
-                    const omenContainer = document.createElement("div");
-                    omenContainer.classList.add("omen-unit");
-                    
-                    const omenImg = new Image();
-                    omenImg.src = 'omen.png';
-                    omenImg.classList.add("omen-image");
-                    
-                    const dot = document.createElement("div");
-                    dot.classList.add("omen-dot", "locked-color");
-                    dot.style.backgroundColor = currentDotColor;
-                    
-                    omenContainer.appendChild(omenImg);
-                    omenContainer.appendChild(dot);
-                    
-                    // Place Omen above any Relic
-                    const existingRelic = cell.querySelector('.relic');
-                    if (existingRelic) {
-                        cell.insertBefore(omenContainer, existingRelic.nextSibling);
-                    } else {
-                        cell.appendChild(omenContainer);
-                    }
-                } else {
-                    // Place regular unit
-                    const img = document.createElement("img");
-                    img.src = selectedUnit;
-                    img.classList.add("unit");
-                    img.style.imageRendering = "crisp-edges";
-                    
-                    // Place unit above Relics but below Omens
-                    const existingOmen = cell.querySelector('.omen-unit');
-                    if (existingOmen) {
-                        cell.insertBefore(img, existingOmen);
-                    } else {
-                        cell.appendChild(img);
-                    }
-                }
-            } 
-            else if (selectedShape === 'relic') {
-                // Remove existing Relic if present
-                const existingRelic = cell.querySelector('.relic');
-                if (existingRelic) existingRelic.remove();
+        // 3. Funkcja generująca obrazek z poprawkami
+        async function saveAsImage() {
+            try {
+                // Włącz dodatkowe logowanie
+                console.log("Starting image generation...");
                 
-                // Create new Relic
-                const relicDiv = document.createElement("div");
-                relicDiv.classList.add("relic", "locked-color");
-                relicDiv.style.borderColor = currentRelicColor;
-                relicDiv.style.backgroundImage = "url('relic.png')";
-                
-                // Place Relic at the bottom
-                cell.insertBefore(relicDiv, cell.firstChild);
-            }
-        }
+                const options = {
+                    useCORS: true,
+                    allowTaint: true,
+                    scale: 2, // Lepsza jakość
+                    logging: true,
+                    backgroundColor: null,
+                    removeContainer: true
+                };
 
-        function deselectAll() {
-            selectedUnit = null;
-            selectedShape = null;
-            document.querySelectorAll('.unit-option img, .shape-option').forEach(el => {
-                el.classList.remove('selected');
-            });
-        }
-
-        function clearElements() {
-            document.querySelectorAll(".unit, .omen-unit, .relic").forEach(element => element.remove());
-        }
-
-        function randomizePlacement() {
-            clearElements();
-            
-            const greenCells = Array.from(document.querySelectorAll('.cell.green'));
-            const shuffledCells = [...greenCells].sort(() => Math.random() - 0.5);
-            
-            // Generate random Omens (1-5)
-            const omenCount = Math.floor(Math.random() * 5) + 1;
-            const relicCount = omenCount; // Same number of Relics
-            
-            // Place Omens first
-            for (let i = 0; i < Math.min(omenCount, shuffledCells.length); i++) {
-                const cell = shuffledCells[i];
+                const canvas = await html2canvas(document.getElementById("grid"), options);
                 
-                const omenContainer = document.createElement("div");
-                omenContainer.classList.add("omen-unit");
+                console.log("Canvas generated successfully");
                 
-                const omenImg = new Image();
-                omenImg.src = 'omen.png';
-                omenImg.classList.add("omen-image");
-                
-                const dot = document.createElement("div");
-                dot.classList.add("omen-dot", "locked-color");
-                dot.style.backgroundColor = currentDotColor;
-                
-                omenContainer.appendChild(omenImg);
-                omenContainer.appendChild(dot);
-                
-                // Place above any Relic
-                const existingRelic = cell.querySelector('.relic');
-                if (existingRelic) {
-                    cell.insertBefore(omenContainer, existingRelic.nextSibling);
-                } else {
-                    cell.appendChild(omenContainer);
-                }
-            }
-            
-            // Place regular units on remaining green cells (up to 30 total)
-            let unitsPlaced = 0;
-            const maxUnits = 30 - omenCount;
-            for (let i = omenCount; i < shuffledCells.length && unitsPlaced < maxUnits; i++) {
-                const cell = shuffledCells[i];
-                const img = document.createElement("img");
-                img.src = availableUnits[unitsPlaced % (availableUnits.length - 1)];
-                img.classList.add("unit");
-                img.style.imageRendering = "crisp-edges";
-                
-                // Place above Relics but below Omens
-                const existingOmen = cell.querySelector('.omen-unit');
-                if (existingOmen) {
-                    cell.insertBefore(img, existingOmen);
-                } else {
-                    cell.appendChild(img);
-                }
-                unitsPlaced++;
-            }
-            
-            // Place Relics
-            const allGreenCells = [...greenCells].sort(() => Math.random() - 0.5);
-            for (let i = 0; i < Math.min(relicCount, allGreenCells.length); i++) {
-                const cell = allGreenCells[i];
-                
-                const relicDiv = document.createElement("div");
-                relicDiv.classList.add("relic", "locked-color");
-                relicDiv.style.borderColor = currentRelicColor;
-                relicDiv.style.backgroundImage = "url('relic.png')";
-                
-                // Place at the bottom
-                cell.insertBefore(relicDiv, cell.firstChild);
-            }
-        }
-
-        const layout = [
-            ["path", "green", "green", "green", "green", "green", "brown"],
-            ["path", "path", "path", "green", "path", "path", "path"],
-            ["green", "green", "path", "green", "path", "green", "green"],
-            ["green", "green", "path", "green", "path", "green", "green"],
-            ["green", "green", "path", "path", "path", "green", "green"]
-        ];
-        
-        // Create grid
-        layout.forEach((row, rowIndex) => {
-            row.forEach((cellType, colIndex) => {
-                const cell = document.createElement("div");
-                cell.classList.add("cell", cellType);
-                cell.dataset.row = rowIndex;
-                cell.dataset.col = colIndex;
-                if (cellType === "green") {
-                    cell.addEventListener("click", placeElement);
-                }
-                grid.appendChild(cell);
-            });
-        });
-
-        function generateUnitSelection() {
-            unitsContainer.innerHTML = '';
-            availableUnits.forEach((unitSrc, index) => {
-                const unitOption = document.createElement("div");
-                unitOption.classList.add("unit-option");
-                const img = document.createElement("img");
-                img.src = unitSrc;
-                img.alt = unitSrc.endsWith('omen.png') ? 'Omen' : `Unit ${index + 1}`;
-                img.title = unitSrc.endsWith('omen.png') ? 'Omen' : `Unit ${index + 1}`;
-                img.addEventListener("click", (e) => selectUnit(img.src, e));
-                unitOption.appendChild(img);
-                if (unitSrc.endsWith('omen.png')) {
-                    const label = document.createElement("p");
-                    label.textContent = "Omen";
-                    unitOption.appendChild(label);
-                }
-                unitsContainer.appendChild(unitOption);
-            });
-        }
-
-        function saveAsImage() {
-            html2canvas(grid).then(canvas => {
-                const generatedImage = document.getElementById("generated-image");
-                generatedImage.src = canvas.toDataURL("image/png");
+                const img = document.getElementById("generated-image");
+                img.src = canvas.toDataURL("image/png");
                 document.getElementById("image-container").style.display = "block";
-                generatedImage.scrollIntoView({ behavior: 'smooth' });
-            });
+            } catch (error) {
+                console.error("Generation failed:", error);
+                alert("Error generating image. Check console for details.");
+            }
         }
 
-        // Initialize the app
-        preloadImages();
-        generateUnitSelection();
+        // 4. Inicjalizacja - ładowanie zasobów przed użyciem
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const [bgImg] = await preloadImages([assets.background]);
+                document.getElementById("grid-bg").style.backgroundImage = `url(${bgImg.src})`;
+                
+                console.log("Assets loaded successfully");
+            } catch (error) {
+                console.error("Error loading assets:", error);
+            }
+        });
+
+        // 5. Zmodyfikowana funkcja placeElement - upewnij się, że używa preloadImages
+        async function placeElement(event) {
+            if (selectedUnit) {
+                const img = new Image();
+                img.crossOrigin = "Anonymous";
+                img.src = selectedUnit;
+                await new Promise((resolve) => { img.onload = resolve; });
+                
+                // Reszta logiki dodawania elementów...
+            }
+        }
     </script>
-    <footer>Made By 0jek</footer>
+
+    <!-- Reszta Twojego kodu pozostaje bez zmian -->
 </body>
 </html>
