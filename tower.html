@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Board Creator 7x7</title>
+    <title>Board Creator</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         .top-bar {
@@ -85,6 +85,17 @@
             width: 50px;
             height: 50px;
             position: relative;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+        }
+        .cell.g {
+            background-color: #90EE90;
+        }
+        .cell.b {
+            background-color: #8B4513;
+        }
+        .cell.p {
+            background-color: #d3d3d3;
         }
         .unit {
             width: 40px;
@@ -333,7 +344,7 @@
         function randomizePlacement() {
             clearElements();
             
-            const greenCells = Array.from(document.querySelectorAll('.cell.green'));
+            const greenCells = Array.from(document.querySelectorAll('.cell.g'));
             const shuffledCells = [...greenCells].sort(() => Math.random() - 0.5);
             
             const omenCount = Math.floor(Math.random() * (config.omenCount.max - config.omenCount.min + 1)) + config.omenCount.min;
@@ -510,15 +521,15 @@
                 });
         }
 
-        // Plansza 7x7 - wszystkie komórki są zielone (możesz zmienić według potrzeb)
+        // Plansza 7x7 z uproszczonymi oznaczeniami (g, b, p)
         const layout = [
-            ["brown", "green", "path", "path", "path", "green", "brown"],
-            ["green", "green", "green", "green", "green", "green", "green"],
-            ["green", "green", "green", "green", "green", "green", "green"],
-            ["green", "green", "green", "green", "green", "green", "green"],
-            ["green", "green", "green", "green", "green", "green", "green"],
-            ["green", "green", "green", "green", "green", "green", "green"],
-            ["green", "green", "green", "green", "green", "green", "green"]
+            ["b", "g", "p", "p", "p", "g", "b"],
+            ["g", "g", "p", "g", "p", "g", "g"],
+            ["g", "g", "p", "g", "p", "g", "g"],
+            ["g", "g", "p", "g", "p", "g", "g"],
+            ["g", "g", "p", "g", "p", "g", "g"],
+            ["g", "g", "p", "g", "p", "g", "g"],
+            ["b", "g", "g", "g", "g", "g", "b"]
         ];
         
         layout.forEach((row, rowIndex) => {
@@ -527,7 +538,7 @@
                 cell.classList.add("cell", cellType);
                 cell.dataset.row = rowIndex;
                 cell.dataset.col = colIndex;
-                if (cellType === "green") {
+                if (cellType === "g") {
                     cell.addEventListener("click", placeElement);
                 }
                 grid.appendChild(cell);
