@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Memory Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 20px;
+        }
+        
+        h1 {
+            color: #2c3e50;
+        }
+        
+        .game-container {
+            display: grid;
+            grid-template-columns: repeat(6, 100px);
+            grid-template-rows: repeat(4, 100px);
+            gap: 10px;
+            justify-content: center;
+            margin: 20px auto;
+            max-width: 660px;
+        }
+        
+        .card {
+            width: 100px;
+            height: 100px;
+            background-color: #3498db;
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            transform-style: preserve-3d;
+        }
+        
+        .card img {
+            width: 80px;
+            height: 80px;
+            object-fit: contain;
+            display: none;
+        }
+        
+        .card.flipped {
+            background-color: #ecf0f1;
+            transform: rotateY(180deg);
+        }
+        
+        .card.flipped img {
+            display: block;
+        }
+        
+        .card.matched {
+            cursor: default;
+            opacity: 0.5;
+        }
+        
+        .controls {
+            margin: 20px 0;
+        }
+        
+        button {
+            background-color: #2ecc71;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 0 10px;
+            transition: background-color 0.3s;
+        }
+        
+        button:hover {
+            background-color: #27ae60;
+        }
+        
+        #stats {
+            margin: 20px 0;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Memory Game</h1>
+    
+    <div id="stats">
+        <p>Attempts: <span id="attempts">0</span> | Matched: <span id="matched">0</span>/12</p>
+    </div>
+    
+    <div class="controls">
+        <button onclick="startGame()">New Game</button>
+        <button onclick="showAllCards()">Show All</button>
+    </div>
+    
+    <div class="game-container" id="game-container"></div>
+    
+    <script>
+        const cardImages = [];
+        for (let i = 1; i <= 12; i++) {
+            cardImages.push(`image${i}.png`);
+            cardImages.push(`image${i}.png`); // Każdy obrazek ma parę
+        }
+        
+        // Dodaj Omen jako specjalną kartę
+        cardImages.push('omen.png');
+        cardImages.push('omen.png');
+        
+        let cards = [];
+        let flippedCards = [];
+        let matchedPairs = 0;
+        let attempts = 0;
+        let gameActive = false;
+        
+        function startGame() {
+            // Reset stats
+            matchedPairs = 0;
+            attempts = 0;
+            updateStats();
+            
+            // Clear game board
+            const container = document.getElementById('game-container');
+            container.innerHTML = '';
+            
+            // Shuffle cards
+            cards = [...cardImages].sort(() => Math.random() - 0.5);
+            
+            // Create card elements
+            cards.forEach((image, index) => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.dataset.index = index;
+                card.dataset.image = image;
+                
+                const img = document.createElement('img');
+                img.src = image;
+                img.alt = 'Card';
+                
+                card.appendChild(img);
+                card.addEventListener('click', flipCard);
+                container.appendChild(card);
+            });
+            
+            gameActive = true;
+        }
+        
+        function flipCard() {
+            if (!gameActive) return;
+            
+            const card = this;
+            
+            // Nie pozwól na odwrócenie już dopasowanej karty lub tej samej karty dwa razy
+            if (card.classList.contains('matched') || card.classList.contains('flipped')) {
+                return;
+            }
+            
+            // Nie pozwól na odwrócenie więcej niż 2 kart na raz
+            if (flippedCards.length >= 2) {
+                return;
+            }
+            
+            card.classList.add('flipped');
+            flippedCards.push(card);
+            
+            // Sprawdź dopasowanie, gdy dwie karty są odkryte
+            if (flippedCards.length === 2) {
+                attempts++;
+                updateStats();
+                
+                const card1 = flippedCards[0];
+                const card2 = flippedCards[1];
+                
+                if (card1.dataset.image === card2.dataset.image) {
+                    // Match found
+                    card1.classList.add('matched');
+                    card2.classList.add('matched');
+                    flippedCards = [];
+                    matchedPairs++;
+                    updateStats();
+                    
+                    // Sprawdź czy gra się zakończyła
+                    if (matchedPairs === 12) {
+                        setTimeout(() => {
+                            alert(`Congratulations! You won in ${attempts} attempts!`);
+                            gameActive = false;
+                        }, 500);
+                    }
+                } else {
+                    // No match - flip cards back after delay
+                    setTimeout(() => {
+                        card1.classList.remove('flipped');
+                        card2.classList.remove('flipped');
+                        flippedCards = [];
+                    }, 1000);
+                }
+            }
+        }
+        
+        function showAllCards() {
+            if (!gameActive) return;
+            
+            const allCards = document.querySelectorAll('.card');
+            allCards.forEach(card => {
+                card.classList.add('flipped');
+            });
+            
+            setTimeout(() => {
+                allCards.forEach(card => {
+                    if (!card.classList.contains('matched')) {
+                        card.classList.remove('flipped');
+                    }
+                });
+            }, 2000);
+        }
+        
+        function updateStats() {
+            document.getElementById('attempts').textContent = attempts;
+            document.getElementById('matched').textContent = matchedPairs;
+        }
+        
+        // Rozpocznij grę przy ładowaniu strony
+        window.onload = startGame;
+    </script>
+</body>
+</html>
