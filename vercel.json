@@ -8,12 +8,19 @@
   ],
   "routes": [
     {
-      "src": "/upload",
-      "dest": "/upload.js"
+      "src": "/api/upload",
+      "dest": "/upload.js",
+      "methods": ["POST"]
     },
     {
-      "src": "/list",
-      "dest": "/list.js"
+      "src": "/api/list",
+      "dest": "/list.js", 
+      "methods": ["GET"]
+    },
+    {
+      "src": "/",
+      "dest": "/upload.html",
+      "status": 200
     },
     {
       "src": "/(.*)",
