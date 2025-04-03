@@ -106,6 +106,7 @@
             width: 40px;
             height: 40px;
             z-index: 4;
+            pointer-events: none;
         }
         .omen-image {
             width: 100%;
@@ -140,6 +141,7 @@
             border-radius: 0;
             image-rendering: crisp-edges;
             z-index: 2;
+            pointer-events: none;
         }
         .units-container, .shapes-container {
             display: flex;
@@ -427,6 +429,9 @@
             });
             selectedUnit = src;
             selectedShape = null;
+            removeMode = false;
+            removeModeBtn.textContent = "Remove Mode: OFF";
+            removeModeBtn.style.backgroundColor = "#e74c3c";
             event.target.classList.add('selected');
         }
 
@@ -436,6 +441,9 @@
             });
             selectedShape = type;
             selectedUnit = null;
+            removeMode = false;
+            removeModeBtn.textContent = "Remove Mode: OFF";
+            removeModeBtn.style.backgroundColor = "#e74c3c";
             event.currentTarget.classList.add('selected');
         }
 
@@ -463,6 +471,9 @@
         function deselectAll() {
             selectedUnit = null;
             selectedShape = null;
+            removeMode = false;
+            removeModeBtn.textContent = "Remove Mode: OFF";
+            removeModeBtn.style.backgroundColor = "#e74c3c";
             document.querySelectorAll('.unit-option img, .shape-option').forEach(el => {
                 el.classList.remove('selected');
             });
