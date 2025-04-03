@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Image Uploader</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <h1>Image Uploader</h1>
+  
+  <div class="upload-container">
+    <h2>Upload New Image</h2>
+    <input type="file" id="imageInput" accept=".png" />
+    <p>or drag and drop your PNG file here</p>
+    <img id="preview" alt="Image preview" />
+    <div>
+      <button id="uploadBtn" disabled>Upload Image</button>
+    </div>
+    <div id="uploadStatus" class="status"></div>
+  </div>
+
+  <div class="gallery-container">
+    <h2>Uploaded Images</h2>
+    <button id="refreshBtn">Refresh List</button>
+    <div id="gallery" class="gallery">
+      <div class="loading">Loading images...</div>
+    </div>
+  </div>
+
+  <script>
+    // Elements
+    const imageInput = document.getElementById('imageInput');
+    const preview = document.getElementById('preview');
+    const uploadBtn = document.getElementById('uploadBtn');
+    const uploadStatus = document.getElementById('uploadStatus');
+    const gallery = document.getElementById('gallery');
+    const refreshBtn = document.getElementById('refreshBtn');
+    const uploadContainer = document.querySelector('.upload-container');
+
+    let selectedFile = null;
+
+    // Initialize
+    loadImages();
+
+    // Event Listeners
+    imageInput.addEventListener('change', (e) => handleFileSelection(e.target.files[0]));
+    uploadContainer.addEventListener('dragover', handleDragOver);
+    uploadContainer.addEventListener('dragleave', handleDragLeave);
+    uploadContainer.addEventListener('drop', handleDrop);
+    uploadBtn.addEventListener('click', uploadImage);
+    refreshBtn.addEventListener('click', loadImages);
+
+    // Functions
+    function handleDragOver(e) {
+      e.preventDefault();
+      uploadContainer.style.borderColor = '#4CAF50';
+    }
+
+    function handleDragLeave() {
+      uploadContainer.style.borderColor = '#ccc';
+    }
+
+    function handleDrop(e) {
+      e.preventDefault();
+      uploadContainer.style.borderColor = '#ccc';
+      handleFileSelection(e.dataTransfer.files[0]);
+    }
+
+    function handleFileSelection(file) {
+      if (!file) return;
+      
+      if (file.type !== 'image/png') {
+        showStatus('Please select a PNG file.', 'error', uploadStatus);
+        return;
+      }
+      
+      selectedFile = file;
+      
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        preview.src = e.target.result;
+        preview.style.display = 'block';
+      };
+      reader.readAsDataURL(file);
+      
+      uploadBtn.disabled = false;
+    }
+
+    async function uploadImage() {
+      if (!selectedFile) return;
+      
+      uploadBtn.disabled = true;
+      showStatus('Uploading image...', 'info', uploadStatus);
+      
+      try {
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+          try {
+            const response = await fetch('/upload', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                image: e.target.result,
+                name: selectedFile.name
+              }),
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+              throw new Error(result.error || 'Upload failed');
+            }
+
+            showStatus(`Image uploaded successfully!`, 'success', uploadStatus);
+            preview.style.display = 'none';
+            imageInput.value = '';
+            selectedFile = null;
+            loadImages();
+          } catch (error) {
+            showStatus(`Error: ${error.message}`, 'error', uploadStatus);
+            uploadBtn.disabled = false;
+          }
+        };
+        reader.readAsDataURL(selectedFile);
+      } catch (error) {
+        showStatus(`Error: ${error.message}`, 'error', uploadStatus);
+        uploadBtn.disabled = false;
+      }
+    }
+
+    async function loadImages() {
+      gallery.innerHTML = '<div class="loading">Loading images...</div>';
+      
+      try {
+        const response = await fetch('/list');
+        const images = await response.json();
+
+        if (!response.ok) {
+          throw new Error(images.error || 'Failed to load images');
+        }
+
+        if (images.length === 0) {
+          gallery.innerHTML = '<div class="loading">No images found</div>';
+          return;
+        }
+
+        gallery.innerHTML = images.map(image => `
+          <div class="gallery-item">
+            <img src="${image.url}" alt="${image.name}" />
+            <p>${image.name}</p>
+            <p>${(image.size / 1024).toFixed(2)} KB</p>
+          </div>
+        `).join('');
+      } catch (error) {
+        gallery.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+      }
+    }
+
+    function showStatus(message, type, element) {
+      element.textContent = message;
+      element.className = `status ${type}`;
+    }
+  </script>
+</body>
+</html>
