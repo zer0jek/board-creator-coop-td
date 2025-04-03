@@ -15,16 +15,19 @@
         
         h1 {
             color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        
+        .game-info {
+            margin-bottom: 20px;
         }
         
         .game-container {
             display: grid;
-            grid-template-columns: repeat(6, 100px);
-            grid-template-rows: repeat(4, 100px);
             gap: 10px;
             justify-content: center;
             margin: 20px auto;
-            max-width: 660px;
+            max-width: 90%;
         }
         
         .card {
@@ -39,6 +42,7 @@
             transition: all 0.3s ease;
             position: relative;
             transform-style: preserve-3d;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
         
         .card img {
@@ -59,11 +63,17 @@
         
         .card.matched {
             cursor: default;
-            opacity: 0.5;
+            opacity: 0.7;
+            transform: rotateY(180deg);
+            box-shadow: 0 0 10px gold;
         }
         
         .controls {
             margin: 20px 0;
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
         }
         
         button {
@@ -74,8 +84,8 @@
             border-radius: 5px;
             cursor: pointer;
             font-size: 16px;
-            margin: 0 10px;
             transition: background-color 0.3s;
+            min-width: 120px;
         }
         
         button:hover {
@@ -85,83 +95,270 @@
         #stats {
             margin: 20px 0;
             font-size: 18px;
+            background-color: white;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            display: inline-block;
+        }
+        
+        .config-panel {
+            background-color: white;
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin: 20px auto;
+            max-width: 600px;
+            text-align: left;
+        }
+        
+        .config-panel h3 {
+            margin-top: 0;
+            color: #2c3e50;
+        }
+        
+        .card-pair {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+        }
+        
+        .card-pair input {
+            margin: 0 10px;
+            padding: 5px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            flex-grow: 1;
         }
     </style>
 </head>
 <body>
     <h1>Memory Game</h1>
     
-    <div id="stats">
-        <p>Attempts: <span id="attempts">0</span> | Matched: <span id="matched">0</span>/12</p>
+    <div class="game-info">
+        <div id="stats">
+            <p>Attempts: <span id="attempts">0</span> | Matched: <span id="matched">0</span>/<span id="total-pairs">0</span></p>
+        </div>
     </div>
     
     <div class="controls">
         <button onclick="startGame()">New Game</button>
         <button onclick="showAllCards()">Show All</button>
+        <button onclick="toggleConfig()">Configuration</button>
+    </div>
+    
+    <div class="config-panel" id="config-panel" style="display: none;">
+        <h3>Game Configuration</h3>
+        <div id="card-config">
+            <!-- Card pairs will be added here -->
+        </div>
+        <button onclick="addCardPair()">Add Card Pair</button>
+        <button onclick="saveConfig()">Save Configuration</button>
     </div>
     
     <div class="game-container" id="game-container"></div>
     
     <script>
-        const cardImages = [];
-        for (let i = 1; i <= 12; i++) {
-            cardImages.push(`image${i}.png`);
-            cardImages.push(`image${i}.png`); // Każdy obrazek ma parę
-        }
+        // DOM elements
+        const gameContainer = document.getElementById('game-container');
+        const configPanel = document.getElementById('config-panel');
+        const cardConfigContainer = document.getElementById('card-config');
         
-        // Dodaj Omen jako specjalną kartę
-        cardImages.push('omen.png');
-        cardImages.push('omen.png');
+        // Default configuration
+        let gameConfig = {
+            cardPairs: [
+                { card1: 'image1.png', card2: 'image1.png', name: 'Wojownik' },
+                { card1: 'image2.png', card2: 'image2.png', name: 'Mag' },
+                { card1: 'omen.png', card2: 'special.png', name: 'Omen' }
+            ],
+            boardSettings: {
+                cardsPerRow: 6,
+                cardSize: 100,
+                cardGap: 10
+            }
+        };
         
+        // Game state
         let cards = [];
         let flippedCards = [];
         let matchedPairs = 0;
         let attempts = 0;
         let gameActive = false;
+        let totalPairs = 0;
         
+        // Initialize the game
+        function init() {
+            loadConfig();
+            renderConfigPanel();
+            startGame();
+        }
+        
+        // Load configuration from localStorage
+        function loadConfig() {
+            const savedConfig = localStorage.getItem('memoryGameConfig');
+            if (savedConfig) {
+                gameConfig = JSON.parse(savedConfig);
+            }
+        }
+        
+        // Save configuration to localStorage
+        function saveConfig() {
+            const newConfig = {
+                cardPairs: [],
+                boardSettings: gameConfig.boardSettings
+            };
+            
+            // Get all card pairs from the config panel
+            const pairElements = document.querySelectorAll('.card-pair');
+            pairElements.forEach(pair => {
+                const card1 = pair.querySelector('.card1-input').value;
+                const card2 = pair.querySelector('.card2-input').value;
+                const name = pair.querySelector('.pair-name').value;
+                
+                if (card1 && card2) {
+                    newConfig.cardPairs.push({
+                        card1: card1,
+                        card2: card2,
+                        name: name || 'Card'
+                    });
+                }
+            });
+            
+            gameConfig = newConfig;
+            localStorage.setItem('memoryGameConfig', JSON.stringify(gameConfig));
+            toggleConfig();
+            startGame();
+        }
+        
+        // Render configuration panel
+        function renderConfigPanel() {
+            cardConfigContainer.innerHTML = '';
+            
+            gameConfig.cardPairs.forEach((pair, index) => {
+                addCardPairToConfig(pair.card1, pair.card2, pair.name);
+            });
+        }
+        
+        // Add a card pair to configuration panel
+        function addCardPairToConfig(card1 = '', card2 = '', name = '') {
+            const pairElement = document.createElement('div');
+            pairElement.className = 'card-pair';
+            
+            pairElement.innerHTML = `
+                <span>Pair ${cardConfigContainer.children.length + 1}:</span>
+                <input type="text" class="card1-input" value="${card1}" placeholder="Image 1 (e.g. image1.png)">
+                <span>matches with</span>
+                <input type="text" class="card2-input" value="${card2}" placeholder="Image 2 (e.g. image2.png)">
+                <input type="text" class="pair-name" value="${name}" placeholder="Card name">
+                <button onclick="this.parentNode.remove()">Remove</button>
+            `;
+            
+            cardConfigContainer.appendChild(pairElement);
+        }
+        
+        // Add new card pair
+        function addCardPair() {
+            addCardPairToConfig();
+        }
+        
+        // Toggle configuration panel
+        function toggleConfig() {
+            configPanel.style.display = configPanel.style.display === 'none' ? 'block' : 'none';
+        }
+        
+        // Prepare card deck based on configuration
+        function prepareCardDeck() {
+            let deck = [];
+            
+            gameConfig.cardPairs.forEach(pair => {
+                deck.push({
+                    src: pair.card1,
+                    name: pair.name,
+                    pairId: pair.card1 + '-' + pair.card2
+                });
+                
+                deck.push({
+                    src: pair.card2,
+                    name: pair.name,
+                    pairId: pair.card1 + '-' + pair.card2
+                });
+            });
+            
+            return deck;
+        }
+        
+        // Setup game board layout
+        function setupGameBoard() {
+            const settings = gameConfig.boardSettings;
+            
+            // Set CSS grid
+            gameContainer.style.gridTemplateColumns = `repeat(${settings.cardsPerRow}, ${settings.cardSize}px)`;
+            gameContainer.style.gap = `${settings.cardGap}px`;
+            
+            // Set card size
+            document.querySelectorAll('.card').forEach(card => {
+                card.style.width = `${settings.cardSize}px`;
+                card.style.height = `${settings.cardSize}px`;
+            });
+        }
+        
+        // Start new game
         function startGame() {
             // Reset stats
             matchedPairs = 0;
             attempts = 0;
+            totalPairs = gameConfig.cardPairs.length;
+            document.getElementById('total-pairs').textContent = totalPairs;
             updateStats();
             
             // Clear game board
-            const container = document.getElementById('game-container');
-            container.innerHTML = '';
+            gameContainer.innerHTML = '';
+            
+            // Prepare card deck
+            cards = prepareCardDeck();
             
             // Shuffle cards
-            cards = [...cardImages].sort(() => Math.random() - 0.5);
+            cards = cards.sort(() => Math.random() - 0.5);
             
             // Create card elements
-            cards.forEach((image, index) => {
-                const card = document.createElement('div');
-                card.className = 'card';
-                card.dataset.index = index;
-                card.dataset.image = image;
+            cards.forEach((card, index) => {
+                const cardElement = document.createElement('div');
+                cardElement.className = 'card';
+                cardElement.dataset.index = index;
+                cardElement.dataset.image = card.src;
+                cardElement.dataset.pairId = card.pairId;
+                cardElement.title = card.name;
                 
                 const img = document.createElement('img');
-                img.src = image;
-                img.alt = 'Card';
+                img.src = card.src;
+                img.alt = card.name;
                 
-                card.appendChild(img);
-                card.addEventListener('click', flipCard);
-                container.appendChild(card);
+                cardElement.appendChild(img);
+                cardElement.addEventListener('click', flipCard);
+                gameContainer.appendChild(cardElement);
             });
+            
+            // Setup board layout
+            setupGameBoard();
             
             gameActive = true;
         }
         
+        // Flip card
         function flipCard() {
             if (!gameActive) return;
             
             const card = this;
             
-            // Nie pozwól na odwrócenie już dopasowanej karty lub tej samej karty dwa razy
+            // Prevent flipping matched or already flipped cards
             if (card.classList.contains('matched') || card.classList.contains('flipped')) {
                 return;
             }
             
-            // Nie pozwól na odwrócenie więcej niż 2 kart na raz
+            // Allow only 2 cards to be flipped at once
             if (flippedCards.length >= 2) {
                 return;
             }
@@ -169,7 +366,7 @@
             card.classList.add('flipped');
             flippedCards.push(card);
             
-            // Sprawdź dopasowanie, gdy dwie karty są odkryte
+            // Check for match when two cards are flipped
             if (flippedCards.length === 2) {
                 attempts++;
                 updateStats();
@@ -177,7 +374,8 @@
                 const card1 = flippedCards[0];
                 const card2 = flippedCards[1];
                 
-                if (card1.dataset.image === card2.dataset.image) {
+                // Cards match if they have the same pairId
+                if (card1.dataset.pairId === card2.dataset.pairId) {
                     // Match found
                     card1.classList.add('matched');
                     card2.classList.add('matched');
@@ -185,8 +383,8 @@
                     matchedPairs++;
                     updateStats();
                     
-                    // Sprawdź czy gra się zakończyła
-                    if (matchedPairs === 12) {
+                    // Check if game is won
+                    if (matchedPairs === totalPairs) {
                         setTimeout(() => {
                             alert(`Congratulations! You won in ${attempts} attempts!`);
                             gameActive = false;
@@ -203,6 +401,7 @@
             }
         }
         
+        // Show all cards temporarily
         function showAllCards() {
             if (!gameActive) return;
             
@@ -220,13 +419,14 @@
             }, 2000);
         }
         
+        // Update game stats
         function updateStats() {
             document.getElementById('attempts').textContent = attempts;
             document.getElementById('matched').textContent = matchedPairs;
         }
         
-        // Rozpocznij grę przy ładowaniu strony
-        window.onload = startGame;
+        // Initialize the game when page loads
+        window.onload = init;
     </script>
 </body>
 </html>
