@@ -8,13 +8,18 @@
   ],
   "routes": [
     {
+      "src": "/tower",
+      "dest": "/tower.html",
+      "status": 200
+    },
+    {
       "src": "/api/upload",
       "dest": "/upload.js",
       "methods": ["POST"]
     },
     {
       "src": "/api/list",
-      "dest": "/list.js", 
+      "dest": "/list.js",
       "methods": ["GET"]
     },
     {
