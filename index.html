@@ -419,7 +419,6 @@
             removeModeBtn.textContent = removeMode ? "Remove Mode: ON" : "Remove Mode: OFF";
             removeModeBtn.style.backgroundColor = removeMode ? "#c0392b" : "#e74c3c";
             
-            // Reset selection when entering remove mode
             if (removeMode) {
                 selectedUnit = null;
                 selectedShape = null;
@@ -430,7 +429,7 @@
         }
 
         function selectUnit(src, event) {
-            if (removeMode) toggleRemoveMode(); // Automatically turn off remove mode when selecting unit
+            if (removeMode) toggleRemoveMode();
             
             document.querySelectorAll('.unit-option img, .shape-option').forEach(el => {
                 el.classList.remove('selected');
@@ -441,7 +440,7 @@
         }
 
         function selectShape(type) {
-            if (removeMode) toggleRemoveMode(); // Automatically turn off remove mode when selecting shape
+            if (removeMode) toggleRemoveMode();
             
             document.querySelectorAll('.shape-option, .unit-option img').forEach(el => {
                 el.classList.remove('selected');
@@ -532,13 +531,13 @@
                 });
         }
 
-        // Nowa plansza 5x7 (5 wierszy, 7 kolumn)
+        // Plansza 5x7 - wszystkie komórki klikalne
         const layout = [
-            ["p", "green", "green", "green", "green", "green", "green"],
             ["green", "green", "green", "green", "green", "green", "green"],
             ["green", "green", "green", "green", "green", "green", "green"],
             ["green", "green", "green", "green", "green", "green", "green"],
-            ["g", "green", "green", "green", "green", "green", "green"]
+            ["green", "green", "green", "green", "green", "green", "green"],
+            ["green", "green", "green", "green", "green", "green", "green"]
         ];
         
         layout.forEach((row, rowIndex) => {
