@@ -382,6 +382,9 @@
         }
 
         function placeUnit(cell, unit) {
+            const existingUnit = cell.querySelector('.unit');
+            if (existingUnit) existingUnit.remove();
+            
             const img = document.createElement("img");
             img.src = unit.src;
             img.classList.add("unit");
@@ -514,7 +517,7 @@
                 });
         }
 
-        // Plansza 7x7 - używamy klasy 'green' zamiast 'g' dla komórek gdzie można stawiać jednostki
+        // Plansza 7x7 - tylko komórki z klasą 'green' są klikalne
         const layout = [
             ["b", "green", "p", "p", "p", "green", "b"],
             ["green", "green", "p", "green", "p", "green", "green"],
@@ -547,8 +550,20 @@
             });
         });
 
+        // Inicjalizacja
         preloadImages();
         generateUnitSelection();
+        
+        // Obsługa zmiany kolorów
+        dotColorPicker.addEventListener("input", function() {
+            currentDotColor = this.value;
+            updateAllOmenDots();
+        });
+        
+        relicColorPicker.addEventListener("input", function() {
+            currentRelicColor = this.value;
+            updateAllRelicBorders();
+        });
     </script>
     <footer>Made By 0jek</footer>
 </body>
