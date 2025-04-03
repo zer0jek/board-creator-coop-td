@@ -1,0 +1,23 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "/*.js",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/upload",
+      "dest": "/upload.js"
+    },
+    {
+      "src": "/list",
+      "dest": "/list.js"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/upload.html"
+    }
+  ]
+}
