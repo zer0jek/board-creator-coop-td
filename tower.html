@@ -98,7 +98,6 @@
             top: 5px;
             left: 5px;
             z-index: 3;
-            pointer-events: none;
             image-rendering: crisp-edges;
         }
         .omen-unit {
@@ -106,7 +105,6 @@
             width: 40px;
             height: 40px;
             z-index: 4;
-            pointer-events: none;
         }
         .omen-image {
             width: 100%;
@@ -141,7 +139,6 @@
             border-radius: 0;
             image-rendering: crisp-edges;
             z-index: 2;
-            pointer-events: none;
         }
         .units-container, .shapes-container {
             display: flex;
@@ -242,7 +239,7 @@
             <a href="other.html"><button>??</button></a>
             <a href="https://discord.com" target="_blank"><button>Discord</button></a>
         </div>
-        <h1>Board Creator111</h1>
+        <h1>Board Creator 7x7</h1>
     </div>
 
     <div class="buttons">
@@ -421,29 +418,36 @@
             removeMode = !removeMode;
             removeModeBtn.textContent = removeMode ? "Remove Mode: ON" : "Remove Mode: OFF";
             removeModeBtn.style.backgroundColor = removeMode ? "#c0392b" : "#e74c3c";
+            
+            // Reset selection when entering remove mode
+            if (removeMode) {
+                selectedUnit = null;
+                selectedShape = null;
+                document.querySelectorAll('.unit-option img, .shape-option').forEach(el => {
+                    el.classList.remove('selected');
+                });
+            }
         }
 
         function selectUnit(src, event) {
+            if (removeMode) toggleRemoveMode(); // Automatically turn off remove mode when selecting unit
+            
             document.querySelectorAll('.unit-option img, .shape-option').forEach(el => {
                 el.classList.remove('selected');
             });
             selectedUnit = src;
             selectedShape = null;
-            removeMode = false;
-            removeModeBtn.textContent = "Remove Mode: OFF";
-            removeModeBtn.style.backgroundColor = "#e74c3c";
             event.target.classList.add('selected');
         }
 
         function selectShape(type) {
+            if (removeMode) toggleRemoveMode(); // Automatically turn off remove mode when selecting shape
+            
             document.querySelectorAll('.shape-option, .unit-option img').forEach(el => {
                 el.classList.remove('selected');
             });
             selectedShape = type;
             selectedUnit = null;
-            removeMode = false;
-            removeModeBtn.textContent = "Remove Mode: OFF";
-            removeModeBtn.style.backgroundColor = "#e74c3c";
             event.currentTarget.classList.add('selected');
         }
 
@@ -471,9 +475,7 @@
         function deselectAll() {
             selectedUnit = null;
             selectedShape = null;
-            removeMode = false;
-            removeModeBtn.textContent = "Remove Mode: OFF";
-            removeModeBtn.style.backgroundColor = "#e74c3c";
+            if (removeMode) toggleRemoveMode();
             document.querySelectorAll('.unit-option img, .shape-option').forEach(el => {
                 el.classList.remove('selected');
             });
