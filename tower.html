@@ -236,7 +236,7 @@
     <div class="top-bar">
         <div class="top-bar-buttons">
             <a href="tower.html"><button>Tower</button></a>
-            <a href="subpage.html"><button>??</button></a>
+            <a href="other.html"><button>??</button></a>
             <a href="https://discord.com" target="_blank"><button>Discord</button></a>
         </div>
         <h1>Board Creator 7x7</h1>
@@ -460,11 +460,13 @@
             }
             
             if (selectedUnit) {
-                if (selectedUnit.endsWith('omen.png')) {
-                    placeOmen(cell);
-                } else {
-                    const unit = availableUnits.find(u => u.src === selectedUnit);
-                    if (unit) placeUnit(cell, unit);
+                const unit = availableUnits.find(u => u.src === selectedUnit);
+                if (unit) {
+                    if (unit.id === 'omen') {
+                        placeOmen(cell);
+                    } else {
+                        placeUnit(cell, unit);
+                    }
                 }
             } 
             else if (selectedShape === 'relic') {
@@ -495,7 +497,7 @@
                 img.src = unit.src;
                 img.alt = unit.name;
                 img.title = unit.name;
-                img.addEventListener("click", (e) => selectUnit(img.src, e));
+                img.addEventListener("click", (e) => selectUnit(unit.src, e));
                 
                 const label = document.createElement("p");
                 label.classList.add("unit-label");
