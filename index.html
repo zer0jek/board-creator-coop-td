@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Board Creator</title>
+    <title>Board Creator 5x7</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         .top-bar {
@@ -85,6 +85,10 @@
             width: 50px;
             height: 50px;
             position: relative;
+            box-sizing: border-box;
+        }
+        .cell.green {
+            cursor: pointer;
         }
         .unit {
             width: 40px;
@@ -94,7 +98,6 @@
             top: 5px;
             left: 5px;
             z-index: 3;
-            pointer-events: none;
             image-rendering: crisp-edges;
         }
         .omen-unit {
@@ -234,9 +237,9 @@
         <div class="top-bar-buttons">
             <a href="tower.html"><button>Tower</button></a>
             <a href="other.html"><button>??</button></a>
-            <a href="https://discord.gg/hpp5Rquz26" target="_blank"><button>Discord</button></a>
+            <a href="https://discord.com" target="_blank"><button>Discord</button></a>
         </div>
-        <h1>Board Creator</h1>
+        <h1>Board Creator 5x7</h1>
     </div>
 
     <div class="buttons">
@@ -244,7 +247,7 @@
         <button onclick="deselectAll()">Deselect All</button>
         <button id="removeModeBtn" onclick="toggleRemoveMode()">Remove Mode: OFF</button>
         <button onclick="saveAsImage()">Save as Image</button>
-        <button onclick="randomizePlacement()">DO NOT CLIK!!!!</button>
+        <button onclick="randomizePlacement()">Random Placement</button>
     </div>
     
     <div class="color-controls">
@@ -281,8 +284,7 @@
     
     <script>
         const config = {
-            maxUnits: 25,
-            omenCount: { min: 0, max: 18 }  // Zmieniamy zakres na 0-18
+            omenCount: { min: 0, max: 18 }
         };
 
         const grid = document.getElementById("grid");
@@ -298,7 +300,6 @@
         let currentDotColor = "#000000";
         let currentRelicColor = "#000000";
 
-        // Statyczne nazwy jednostek
         const unitNames = {
             1: "Oni", 2: "Biker", 3: "Slime", 4: "Ice Knight", 5: "Asura",
             6: "Blue Dragon", 7: "Big Hand", 8: "Space Soldier", 9: "Coin man", 10: "Cat",
@@ -309,11 +310,14 @@
             'omen': "Omen"
         };
 
-        const availableUnits = Array(config.maxUnits).fill().map((_, i) => ({
-            id: i + 1,
-            src: `image${i + 1}.png`,
-            name: unitNames[i + 1] || `Unit ${i + 1}`
-        }));
+        const availableUnits = [];
+        for (let i = 1; i <= 28; i++) {
+            availableUnits.push({
+                id: i,
+                src: `image${i}.png`,
+                name: unitNames[i] || `Unit ${i}`
+            });
+        }
         
         availableUnits.push({
             id: 'omen',
@@ -335,28 +339,20 @@
             const greenCells = Array.from(document.querySelectorAll('.cell.green'));
             const shuffledCells = [...greenCells].sort(() => Math.random() - 0.5);
             
-            // Losujemy liczbę Omenów od 0 do 18
             const omenCount = Math.floor(Math.random() * (config.omenCount.max - config.omenCount.min + 1)) + config.omenCount.min;
             
-            // Umieść Omens
             for (let i = 0; i < Math.min(omenCount, shuffledCells.length); i++) {
                 const cell = shuffledCells[i];
                 placeOmen(cell);
             }
             
-            // Umieść jednostki (maksymalnie 28 - omenCount)
-            let unitsPlaced = 0;
-            const maxUnitsToPlace = Math.min(config.maxUnits - omenCount, shuffledCells.length - omenCount);
-            
-            for (let i = omenCount; i < shuffledCells.length && unitsPlaced < maxUnitsToPlace; i++) {
+            for (let i = omenCount; i < shuffledCells.length; i++) {
                 const cell = shuffledCells[i];
-                const unitIndex = Math.floor(Math.random() * (availableUnits.length - 1)); // -1 aby pominąć Omen
+                const unitIndex = Math.floor(Math.random() * (availableUnits.length - 1));
                 const unit = availableUnits[unitIndex];
                 placeUnit(cell, unit);
-                unitsPlaced++;
             }
             
-            // Umieść relikwie (tyle samo co Omenów)
             const allGreenCells = [...greenCells].sort(() => Math.random() - 0.5);
             for (let i = 0; i < Math.min(omenCount, allGreenCells.length); i++) {
                 const cell = allGreenCells[i];
@@ -385,6 +381,9 @@
         }
 
         function placeUnit(cell, unit) {
+            const existingUnit = cell.querySelector('.unit');
+            if (existingUnit) existingUnit.remove();
+            
             const img = document.createElement("img");
             img.src = unit.src;
             img.classList.add("unit");
@@ -419,9 +418,20 @@
             removeMode = !removeMode;
             removeModeBtn.textContent = removeMode ? "Remove Mode: ON" : "Remove Mode: OFF";
             removeModeBtn.style.backgroundColor = removeMode ? "#c0392b" : "#e74c3c";
+            
+            // Reset selection when entering remove mode
+            if (removeMode) {
+                selectedUnit = null;
+                selectedShape = null;
+                document.querySelectorAll('.unit-option img, .shape-option').forEach(el => {
+                    el.classList.remove('selected');
+                });
+            }
         }
 
         function selectUnit(src, event) {
+            if (removeMode) toggleRemoveMode(); // Automatically turn off remove mode when selecting unit
+            
             document.querySelectorAll('.unit-option img, .shape-option').forEach(el => {
                 el.classList.remove('selected');
             });
@@ -431,6 +441,8 @@
         }
 
         function selectShape(type) {
+            if (removeMode) toggleRemoveMode(); // Automatically turn off remove mode when selecting shape
+            
             document.querySelectorAll('.shape-option, .unit-option img').forEach(el => {
                 el.classList.remove('selected');
             });
@@ -448,11 +460,13 @@
             }
             
             if (selectedUnit) {
-                if (selectedUnit.endsWith('omen.png')) {
-                    placeOmen(cell);
-                } else {
-                    const unit = availableUnits.find(u => u.src === selectedUnit);
-                    if (unit) placeUnit(cell, unit);
+                const unit = availableUnits.find(u => u.src === selectedUnit);
+                if (unit) {
+                    if (unit.id === 'omen') {
+                        placeOmen(cell);
+                    } else {
+                        placeUnit(cell, unit);
+                    }
                 }
             } 
             else if (selectedShape === 'relic') {
@@ -463,6 +477,7 @@
         function deselectAll() {
             selectedUnit = null;
             selectedShape = null;
+            if (removeMode) toggleRemoveMode();
             document.querySelectorAll('.unit-option img, .shape-option').forEach(el => {
                 el.classList.remove('selected');
             });
@@ -482,7 +497,7 @@
                 img.src = unit.src;
                 img.alt = unit.name;
                 img.title = unit.name;
-                img.addEventListener("click", (e) => selectUnit(img.src, e));
+                img.addEventListener("click", (e) => selectUnit(unit.src, e));
                 
                 const label = document.createElement("p");
                 label.classList.add("unit-label");
@@ -517,29 +532,40 @@
                 });
         }
 
+        // Nowa plansza 5x7 (5 wierszy, 7 kolumn)
         const layout = [
-            ["path", "green", "green", "green", "green", "green", "brown"],
-            ["path", "path", "path", "green", "path", "path", "path"],
-            ["green", "green", "path", "green", "path", "green", "green"],
-            ["green", "green", "path", "green", "path", "green", "green"],
-            ["green", "green", "path", "path", "path", "green", "green"]
+            ["green", "green", "green", "green", "green", "green", "green"],
+            ["green", "green", "green", "green", "green", "green", "green"],
+            ["green", "green", "green", "green", "green", "green", "green"],
+            ["green", "green", "green", "green", "green", "green", "green"],
+            ["green", "green", "green", "green", "green", "green", "green"]
         ];
         
         layout.forEach((row, rowIndex) => {
             row.forEach((cellType, colIndex) => {
                 const cell = document.createElement("div");
-                cell.classList.add("cell", cellType);
+                cell.classList.add("cell", "green");
+                cell.addEventListener("click", placeElement);
                 cell.dataset.row = rowIndex;
                 cell.dataset.col = colIndex;
-                if (cellType === "green") {
-                    cell.addEventListener("click", placeElement);
-                }
                 grid.appendChild(cell);
             });
         });
 
+        // Inicjalizacja
         preloadImages();
         generateUnitSelection();
+        
+        // Obsługa zmiany kolorów
+        dotColorPicker.addEventListener("input", function() {
+            currentDotColor = this.value;
+            updateAllOmenDots();
+        });
+        
+        relicColorPicker.addEventListener("input", function() {
+            currentRelicColor = this.value;
+            updateAllRelicBorders();
+        });
     </script>
     <footer>Made By 0jek</footer>
 </body>
